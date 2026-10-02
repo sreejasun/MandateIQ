@@ -211,7 +211,7 @@ def create_app(db_path: str | Path | None = None, inline_runner: bool = False,
         except services.DatasetError as exc:
             raise HTTPException(422, str(exc)) from exc
 
-        review_id = _new_id("SC" if kind == "scenario" else "FG")
+        review_id = _new_id("SC" if kind == "scenario" else "MQ")
         db.add_review({
             "id": review_id,
             "kind": kind,

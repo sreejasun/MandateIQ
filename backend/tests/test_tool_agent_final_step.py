@@ -29,5 +29,5 @@ def test_last_step_requires_submit(monkeypatch):
 
 def test_tools_ignore_arguments_they_do_not_take():
     tools = ReviewTools(rc.case_a_clean(), "challenger")
-    out, ok = tools.call("get_mandate", {"case_id": "FG-1"})
+    out, ok = tools.call("get_mandate", {"case_id": "MQ-1"})
     assert ok and "mandate" in out

@@ -121,11 +121,31 @@ Reviews run one at a time on a background worker and are stored in
 | **Groq**                  | Running without AWS access | `GROQ_API_KEY`, optional `GROQ_MODEL` (default `openai/gpt-oss-120b`) |
 | **Mock**                  | Offline demos and tests    | Nothing; deterministic, no model calls                                |
 
-The tool-using agents were written against the Bedrock Converse API. Groq
-runs the same agent loop through an adapter (`backend/src/llm/groq_client.py`)
-that translates tool definitions, tool calls and results to Groq's
-OpenAI-compatible format, so agent logic is identical on both providers.
-Rate-limit errors are retried with backoff.
+### Amazon Bedrock integration
+
+Bedrock is the primary provider, and the agent design is built around it:
+
+- **Converse API.** `backend/src/llm/bedrock_client.py` calls Bedrock
+  through the model-agnostic Converse API, so agent code never depends on a
+  model-specific request format. It also handles model differences, for
+  example leaving out `temperature` for models that no longer accept it.
+- **Native tool use.** Each agent (`backend/src/agents/tool_agent.py`) runs a
+  bounded Converse tool-use loop (at most 12 steps per turn): it looks up
+  evidence through tools, checks its own claims with the hallucination
+  firewall tool, and finishes by calling a `submit_*` tool whose input is
+  validated against a JSON schema. A rejected submission goes back to the
+  model to fix.
+- **Standard AWS credentials.** It uses the normal AWS credential chain
+  (`AWS_PROFILE` or access keys) and `AWS_REGION`, with no extra SDK
+  wrappers.
+- **Tested.** Unit tests cover the Bedrock client. Real-Bedrock smoke tests
+  run with `RUN_BEDROCK=1` (see [Tests](#tests)).
+
+Groq runs the same agent loop through an adapter
+(`backend/src/llm/groq_client.py`) that translates Converse-style tool
+definitions, tool calls and results to Groq's OpenAI-compatible format, so
+agent logic is identical on both providers. Rate-limit errors are retried
+with backoff.
 
 Choose the provider per review in the web interface; `LLM_PROVIDER` sets the
 default.
