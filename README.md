@@ -200,3 +200,7 @@ On the model step of **New review**, tick **Seed two unsupported claims**.
 The Proponent receives one claim citing evidence that does not exist and one
 that misquotes a value. The Committee tab then shows the Challenger catching
 both, the Proponent conceding, and the claims being withdrawn.
+
+## License
+
+Released under the [MIT License](LICENSE).
