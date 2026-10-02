@@ -3,7 +3,7 @@
 **Evidence-first adversarial review of fund nominations.**
 
 MandateIQ reviews one fund at a time against an investment mandate. A
-*Proponent* agent builds the case for approval, a *Challenger* agent attacks
+_Proponent_ agent builds the case for approval, a _Challenger_ agent attacks
 it, and the two debate for up to three rounds. Every claim must cite the
 evidence ledger; a hallucination firewall blocks claims that cite missing or
 misquoted evidence. Deterministic policy, cost and suitability rules run
@@ -21,48 +21,93 @@ committee control.
 
 ## What you can do
 
-| Screen | Purpose |
-| --- | --- |
-| **Cases** | Every review with its outcome and Trust Score; filter and search. |
-| **New review** | Four steps: dataset (demo or your CSV), fund and mandate, model, confirm. Progress streams live while agents work. |
-| **Case → Overview** | The verdict, why it was reached, and what a human reviewer must decide. |
-| **Case → Committee** | The Proponent/Challenger debate as a round-by-round transcript. Withdrawn claims are struck through; evidence IDs link to the ledger. |
-| **Case → Evidence** | The Data Steward's evidence ledger, data quality and transformations. |
-| **Case → Trust and governance** | How the Trust Score was built, caps applied, firewall results, every rule, and agent conflicts. |
-| **Case → Trace** | Pipeline timing, routing decisions, model/latency per agent, and every tool call. |
-| **Case → What-if** | Change expense ratio, risk level, tenure, volatility or track record and rerun the full pipeline; see the before/after comparison. |
-| **Insights** | Outcomes, trust distribution, weakest trust components and frequent risk flags across all reviews. |
+| Screen                          | Purpose                                                                                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cases**                       | Every review with its outcome and Trust Score; filter and search.                                                                     |
+| **New review**                  | Four steps: dataset (demo or your CSV), fund and mandate, model, confirm. Progress streams live while agents work.                    |
+| **Case → Overview**             | The verdict, why it was reached, and what a human reviewer must decide.                                                               |
+| **Case → Committee**            | The Proponent/Challenger debate as a round-by-round transcript. Withdrawn claims are struck through; evidence IDs link to the ledger. |
+| **Case → Evidence**             | The Data Steward's evidence ledger, data quality and transformations.                                                                 |
+| **Case → Trust and governance** | How the Trust Score was built, caps applied, firewall results, every rule, and agent conflicts.                                       |
+| **Case → Trace**                | Pipeline timing, routing decisions, model/latency per agent, and every tool call.                                                     |
+| **Case → What-if**              | Change expense ratio, risk level, tenure, volatility or track record and rerun the full pipeline; see the before/after comparison.    |
+| **Insights**                    | Outcomes, trust distribution, weakest trust components and frequent risk flags across all reviews.                                    |
 
-| | |
-| --- | --- |
+|                                                      |                                                         |
+| ---------------------------------------------------- | ------------------------------------------------------- |
 | ![Case overview](docs/screenshots/case-overview.png) | ![Committee transcript](docs/screenshots/committee.png) |
-| ![Trust and governance](docs/screenshots/trust.png) | ![What-if](docs/screenshots/what-if.png) |
+| ![Trust and governance](docs/screenshots/trust.png)  | ![What-if](docs/screenshots/what-if.png)                |
 
 ## Architecture
 
-```text
-frontend/  React + TypeScript (Vite, Tailwind, TanStack Query, Recharts)
-   │  /api
-backend/
-   api/            FastAPI app, SQLite storage, background review runner
-   src/
-     agents/       Data Steward, Proponent, Challenger, debate, policy, supervisor
-     llm/          Provider layer: Bedrock (main), Groq, mock
-     evidence/     Evidence ledger, claims, verification, conflicts
-     trust/        Hallucination firewall, Trust Score, governance gate
-     orchestration/ Pipeline, routing, shared workflow state
-   config/         Mandates, rules, prompts, trust weights (YAML)
-   tests/          Unit, integration and API tests (no keys needed)
+```mermaid
+flowchart LR
+    UI["<b>Web interface</b><br/>React · TypeScript · Vite<br/>Tailwind · TanStack Query · Recharts"]
+
+    subgraph API["FastAPI backend"]
+        direction TB
+        Routes["REST API<br/>/api"]
+        Worker["Background<br/>review runner"]
+        DB[("SQLite<br/>mandateiq.db")]
+        Routes --> Worker
+        Routes <--> DB
+        Worker --> DB
+    end
+
+    subgraph Core["Review engine · backend/src"]
+        direction TB
+        Orch["<b>orchestration/</b><br/>pipeline · routing · state"]
+        Agents["<b>agents/</b><br/>Data Steward · Proponent · Challenger<br/>debate · policy · supervisor"]
+        Evidence["<b>evidence/</b><br/>ledger · claims · verification · conflicts"]
+        Trust["<b>trust/</b><br/>firewall · Trust Score · governance"]
+        Orch --> Agents
+        Agents --> Evidence
+        Agents --> Trust
+    end
+
+    LLM["<b>llm/</b> provider layer<br/>Bedrock (main) · Groq · Mock"]
+    Config[/"<b>config/</b> YAML<br/>mandates · rules · prompts · trust weights"/]
+
+    UI -- "HTTP /api" --> Routes
+    Worker --> Orch
+    Agents --> LLM
+    Config -.-> Core
 ```
 
-Review pipeline:
+| Folder | Contents |
+| --- | --- |
+| `frontend/` | React + TypeScript web interface |
+| `backend/api/` | FastAPI app, SQLite storage, background review runner |
+| `backend/src/agents/` | Data Steward, Proponent, Challenger, debate, policy, supervisor |
+| `backend/src/llm/` | Provider layer: Bedrock (main), Groq, mock |
+| `backend/src/evidence/` | Evidence ledger, claims, verification, conflicts |
+| `backend/src/trust/` | Hallucination firewall, Trust Score, governance gate |
+| `backend/src/orchestration/` | Pipeline, routing, shared workflow state |
+| `backend/config/` | Mandates, rules, prompts, trust weights (YAML) |
+| `backend/tests/` | Unit, integration and API tests (no keys needed) |
 
-```text
-Dataset → Data Steward (evidence ledger)
-        → Proponent ↔ Challenger (tool use + bounded debate)
-        → Policy / cost / suitability rules
-        → Hallucination firewall → conflicts → Trust Score → governance gate
-        → Supervisor: finalize | rework | human review
+### Review pipeline
+
+```mermaid
+flowchart TD
+    A[/"Fund dataset (CSV)"/] --> B["<b>Data Steward</b><br/>builds the evidence ledger"]
+
+    subgraph Debate["Committee debate · up to 3 rounds"]
+        direction LR
+        P["<b>Proponent</b><br/>case for approval"] <--> C["<b>Challenger</b><br/>attacks the case"]
+    end
+
+    B --> Debate
+    Debate --> R["<b>Policy · cost · suitability rules</b><br/>deterministic checks"]
+    R --> F["<b>Hallucination firewall</b><br/>blocks claims with missing<br/>or misquoted evidence"]
+    F --> K["<b>Conflict detection</b>"]
+    K --> T["<b>Trust Score</b>"]
+    T --> G["<b>Governance gate</b>"]
+    G --> S{"<b>Supervisor</b>"}
+
+    S --> OK(["✅ Finalize"])
+    S --> RW(["🔁 Rework<br/>reanalysis · more evidence"])
+    S --> H(["🧑‍⚖️ Human review"])
 ```
 
 Reviews run one at a time on a background worker and are stored in
@@ -70,11 +115,11 @@ Reviews run one at a time on a background worker and are stored in
 
 ## Model providers
 
-| Provider | When to use | Configure in `.env` |
-| --- | --- | --- |
-| **Amazon Bedrock** (main) | Production runs | `BEDROCK_MODEL_ID`, `AWS_REGION`, AWS credentials |
-| **Groq** | Running without AWS access | `GROQ_API_KEY`, optional `GROQ_MODEL` (default `openai/gpt-oss-120b`) |
-| **Mock** | Offline demos and tests | Nothing; deterministic, no model calls |
+| Provider                  | When to use                | Configure in `.env`                                                   |
+| ------------------------- | -------------------------- | --------------------------------------------------------------------- |
+| **Amazon Bedrock** (main) | Production runs            | `BEDROCK_MODEL_ID`, `AWS_REGION`, AWS credentials                     |
+| **Groq**                  | Running without AWS access | `GROQ_API_KEY`, optional `GROQ_MODEL` (default `openai/gpt-oss-120b`) |
+| **Mock**                  | Offline demos and tests    | Nothing; deterministic, no model calls                                |
 
 The tool-using agents were written against the Bedrock Converse API. Groq
 runs the same agent loop through an adapter (`backend/src/llm/groq_client.py`)
@@ -155,13 +200,3 @@ On the model step of **New review**, tick **Seed two unsupported claims**.
 The Proponent receives one claim citing evidence that does not exist and one
 that misquotes a value. The Committee tab then shows the Challenger catching
 both, the Proponent conceding, and the claims being withdrawn.
-
-## Team
-
-Built by the Fingents team for the AI Investment Spark Challenge 2026:
-Sreeja Sunkeswaram (data pipeline, evidence ledger), Dileep Pabbathi
-(review committee, governance), Narahari (orchestration, LLM infrastructure)
-and Rajashree (interface).
-
-This repository's web interface, API and Groq support were added after the
-challenge.
