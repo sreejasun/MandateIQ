@@ -1,0 +1,17 @@
+# MandateIQ backend (Python 3.10+)
+
+# API
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+python-multipart>=0.0.9
+
+# Data / validation / configuration
+pandas>=2,<3
+numpy>=1.24,<3
+pydantic>=2.7,<3
+pyyaml>=6,<7
+python-dotenv>=1,<2
+
+# LLM providers
+boto3>=1.34,<2          # Amazon Bedrock (primary)
+groq>=0.11,<2           # Groq (alternative when AWS is unavailable)

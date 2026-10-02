@@ -1,0 +1,234 @@
+# MandateIQ illustrative policy / cost / suitability rules.
+# EDUCATIONAL ONLY: synthetic rules, not TIAA or any organization's real process.
+#
+# Shared configuration used by the Data Steward, review agents,
+# policy/suitability checks, and governance pipeline.
+
+rule_version: "rules-v1.1"
+
+
+# ============================================================
+# FIELD ALIASES
+# ============================================================
+
+# Canonical evidence field names and accepted source aliases.
+#
+# This list combines aliases required by:
+#   - Data Steward / Evidence Ledger
+#   - Proponent / Challenger
+#   - Policy & Suitability
+#   - Governance
+
+field_aliases:
+
+  expense_ratio:
+    - expense_ratio
+    - net_expense_ratio
+    - fund_expense_ratio
+    - expense_ratio_pct
+    - expense
+
+  expense_ratio_percentile:
+    - expense_ratio_percentile
+    - expense_ratio_category_percentile
+    - fee_percentile
+    - expense_percentile
+
+  asset_class:
+    - asset_class
+    - fund_asset_class
+    - asset_type
+
+  category:
+    - category
+    - fund_category
+    - morningstar_category
+
+  risk_level:
+    - risk_level
+    - risk_rating
+    - risk_category
+    - risk
+
+  history_years:
+    - history_years
+    - years_since_inception
+    - fund_age
+    - fund_age_years
+    - track_record_years
+
+  manager_tenure_years:
+    - manager_tenure_years
+    - manager_tenure
+    - fund_manager_tenure
+
+  return_3y:
+    - return_3y
+    - fund_return_3years
+    - three_year_return
+    - annualized_return_3y
+    - return_3_year
+
+  return_5y:
+    - return_5y
+    - fund_return_5years
+    - five_year_return
+    - annualized_return_5y
+    - return_5_year
+
+  volatility:
+    - volatility
+    - std_dev_3y
+    - fund_stdev_3years
+    - annualized_volatility
+    - std_dev
+
+
+# ============================================================
+# REQUIRED EVIDENCE
+# ============================================================
+
+required_evidence:
+  - expense_ratio
+  - asset_class
+  - risk_level
+  - history_years
+
+
+# ============================================================
+# RISK SCALE
+# ============================================================
+
+risk_scale:
+  very_low: 1
+  low: 2
+  medium_low: 3
+  medium: 4
+  medium_high: 5
+  high: 6
+  very_high: 7
+
+
+# ============================================================
+# RECOGNIZED ASSET CLASSES
+# ============================================================
+
+recognized_asset_classes:
+  - equity
+  - balanced
+  - fixed_income
+  - allocation
+  - money_market
+  - alternative
+
+
+# ============================================================
+# POLICY / COST THRESHOLDS
+# ============================================================
+
+thresholds:
+  expense_ratio_min: 0.0
+  expense_ratio_max_plausible: 5.0
+  high_fee_percentile: 75
+  low_fee_percentile: 50
+  short_manager_tenure_years: 3
+  stable_manager_tenure_years: 5
+
+
+# ============================================================
+# POLICY / COST / SUITABILITY RULES
+# ============================================================
+
+# Severity semantics:
+#
+# CRITICAL
+#   Hard failure / human-review path.
+#
+# MAJOR
+#   Produces REVIEW status for the associated dimension.
+#
+# MINOR
+#   Produces a risk flag but does not independently create a
+#   critical failure.
+
+rules:
+
+  # ----------------------------------------------------------
+  # POLICY
+  # ----------------------------------------------------------
+
+  - id: POL-001
+    dimension: policy
+    severity: CRITICAL
+    check: required_evidence_present
+    description: "All required evidence fields are present"
+
+  - id: POL-002
+    dimension: policy
+    severity: CRITICAL
+    check: expense_ratio_nonnegative
+    description: "Expense ratio is not negative"
+
+  - id: POL-003
+    dimension: policy
+    severity: CRITICAL
+    check: expense_ratio_plausible
+    description: "Expense ratio is within a plausible range"
+
+  - id: POL-004
+    dimension: policy
+    severity: MAJOR
+    check: asset_class_recognized
+    description: "Asset class is a recognized value"
+
+  - id: POL-005
+    dimension: policy
+    severity: MAJOR
+    check: required_evidence_not_imputed
+    description: "Required evidence comes from source data (not imputed/flagged)"
+
+
+  # ----------------------------------------------------------
+  # COST
+  # ----------------------------------------------------------
+
+  - id: COST-001
+    dimension: cost
+    severity: MAJOR
+    check: expense_ratio_within_mandate
+    description: "Expense ratio is at or below the mandate maximum"
+
+  - id: COST-002
+    dimension: cost
+    severity: MINOR
+    check: fee_percentile_not_high
+    description: "Expense ratio is not in the high-fee tail of its category"
+
+
+  # ----------------------------------------------------------
+  # SUITABILITY
+  # ----------------------------------------------------------
+
+  - id: SUIT-001
+    dimension: suitability
+    severity: CRITICAL
+    check: asset_class_allowed
+    description: "Asset class is allowed by the mandate"
+
+  - id: SUIT-002
+    dimension: suitability
+    severity: MAJOR
+    check: risk_within_mandate
+    description: "Risk level is at or below the mandate maximum"
+
+  - id: SUIT-003
+    dimension: suitability
+    severity: MAJOR
+    check: history_meets_minimum
+    description: "Fund history meets the mandate minimum"
+
+  - id: SUIT-004
+    dimension: suitability
+    severity: MINOR
+    check: manager_tenure_adequate
+    description: "Manager tenure is not unusually short"

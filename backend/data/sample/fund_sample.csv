@@ -1,0 +1,4 @@
+fund_id,fund_name,ticker,expense_ratio,asset_class,risk_level,history_years,category,manager_tenure_years,return_5y,volatility
+F001,Alpha Growth Fund,AGF,0.45,Equity,medium_high,12,Large Growth,7,9.4,14.2
+F002,Beta Balanced Fund,BBF,0.32,Allocation,medium,9,Moderate Allocation,5,7.8,9.6
+F003,Gamma Bond Fund,GBF,0.18,Fixed Income,low,15,Intermediate Bond,10,4.7,5.1

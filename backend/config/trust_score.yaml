@@ -1,0 +1,33 @@
+# AI Trust Score configuration. Deterministic, auditable, 0-100.
+# The Trust Score is a ROUTING INPUT for the Supervisor, not an approval authority.
+trust_version: "trust-v1.0"
+
+weights:                 # must sum to 1.0
+  evidence_coverage: 0.20
+  claim_verification: 0.25
+  data_quality: 0.15
+  agent_confidence: 0.10
+  agent_agreement: 0.15
+  policy_integrity: 0.15
+
+penalties:
+  contradicted_claim_weight: 2.0      # a contradicted claim counts double against verification
+  material_conflict_points: 20        # agreement points lost per material conflict
+  minor_conflict_points: 5
+  policy_major_points: 25             # policy integrity points lost per MAJOR rule failure
+  policy_minor_points: 5
+  missing_data_quality_default: 50    # used when no quality score is available (and noted)
+
+caps:                                 # hard ceilings; the score can never hide these
+  firewall_fail: 55
+  critical_policy_failure: 40
+  llm_error: 50
+
+bands:
+  high: 80
+  medium: 60                          # below medium -> LOW
+
+gates:
+  finalize_min_score: 80              # plus firewall PASS and no material conflicts
+  reanalysis_min_score: 50            # between this and finalize -> reanalysis suggested
+  min_agent_confidence: 0.5           # Proponent or Challenger below this -> human review

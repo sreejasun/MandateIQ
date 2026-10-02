@@ -1,0 +1,13 @@
+# Review committee agent behaviour (Dileep). Override mode with env MANDATEIQ_AGENT_MODE.
+agents_version: "agents-v2.0"
+
+# tool_use    : agents gather evidence themselves through tools, self-check claims with the
+#               Hallucination Firewall tool, and submit structured output through a submit tool.
+# single_shot : v1 behaviour, all evidence in one prompt, one JSON answer.
+mode: tool_use
+max_tool_steps: 12         # per agent turn; bounded autonomy
+
+debate:
+  enabled: true
+  max_rounds: 3            # round 1 = opening (Proponent case + Challenger attack); 2..N = rebuttals
+  respond_to_severities: [HIGH]   # challenges the Proponent must answer; firewall-blocked claims always

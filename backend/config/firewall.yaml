@@ -1,0 +1,12 @@
+# Hallucination Firewall configuration (deterministic).
+firewall_version: "firewall-v1.0"
+
+numeric_tolerance:
+  absolute: 0.01        # |cited - stored| <= absolute  OR
+  relative: 0.02        # |cited - stored| / |stored| <= relative
+
+# How claim problems change firewall_status.
+# PASS: every material claim verified. WARN: minor issues. FAIL: a claim is contradicted,
+# cites non-existent/foreign evidence, or required evidence is missing.
+fail_on: [CONTRADICTED, INVALID_REFERENCE, FOREIGN_EVIDENCE, MISSING_REQUIRED_EVIDENCE]
+warn_on: [UNSUPPORTED, NO_EVIDENCE_CITED, SCHEMA_INVALID]

@@ -1,0 +1,19 @@
+# Illustrative mock investment mandates. SYNTHETIC — not real client or TIAA mandates.
+default_mandate: balanced_growth
+
+mandates:
+  balanced_growth:
+    name: "Long-term growth (medium risk)"
+    objective: long_term_growth
+    max_risk_level: medium
+    allowed_asset_classes: [equity, balanced, allocation]
+    max_expense_ratio: 1.00      # percent
+    minimum_history_years: 3
+
+  conservative_income:
+    name: "Conservative income (low risk)"
+    objective: income_preservation
+    max_risk_level: low
+    allowed_asset_classes: [fixed_income, money_market, balanced]
+    max_expense_ratio: 0.60
+    minimum_history_years: 5

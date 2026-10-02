@@ -1,0 +1,38 @@
+# Secrets / credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*
+.aws/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local data (review database)
+backend/data/*.db
+backend/data/*.db-journal
+
+# Node / frontend build
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+*.tmp
+*.temp
